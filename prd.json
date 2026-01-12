@@ -1,0 +1,502 @@
+{
+  "project": {
+    "name": "Homefield",
+    "description": "A web app for friends to fill out NFL playoff brackets, pay entry fees, and compete for best score",
+    "techStack": {
+      "framework": "Nuxt 4.2",
+      "ui": "NuxtUI v4",
+      "styling": "Tailwind CSS v4",
+      "database": "Supabase (Postgres + Auth)",
+      "payments": "PayPal JS SDK (PayPal + Venmo)",
+      "deployment": "Vercel",
+      "dataSource": "ESPN unofficial API (manual fallback)"
+    },
+    "branchName": "nfl-bracket-pool"
+  },
+  "userStories": [
+    {
+      "id": "US-001",
+      "category": "Infrastructure",
+      "title": "Initialize Nuxt 4 project with NuxtUI and Supabase",
+      "description": "Set up the foundational Nuxt 4.2 project with NuxtUI v4, Tailwind CSS v4, and Supabase client integration",
+      "acceptanceCriteria": [
+        "Nuxt 4.2 project initializes without errors",
+        "NuxtUI v4 components render correctly",
+        "Tailwind CSS v4 utilities work in templates",
+        "@nuxtjs/supabase module is installed and configured",
+        "Environment variables for Supabase URL and anon key are in .env.example",
+        "Dev server runs on localhost:3000"
+      ],
+      "stepsToVerify": [
+        "Run `npm run dev` and confirm no errors",
+        "Create test page with NuxtUI Button component",
+        "Apply Tailwind class and confirm styling",
+        "Check Supabase client is accessible via useSupabaseClient()"
+      ],
+      "priority": 1,
+      "passes": true
+    },
+    {
+      "id": "US-002",
+      "category": "Infrastructure",
+      "title": "Create Supabase database schema",
+      "description": "Define all database tables, relationships, and RLS policies in Supabase",
+      "acceptanceCriteria": [
+        "users table extends auth.users with first_name, last_name, created_at",
+        "pools table has id, name, invite_code, owner_id, entry_fee, locks_at, created_at",
+        "pool_members table has pool_id, user_id, joined_at",
+        "brackets table has id, user_id, pool_id, name, payment_status, payment_id, submitted_at, created_at",
+        "games table has id, season_year, round, home_team, away_team, winner, starts_at, espn_game_id, actual_total_points, actual_total_yards",
+        "picks table has id, bracket_id, game_id, picked_team, super_bowl_total_points, super_bowl_total_yards",
+        "Foreign key relationships are correctly defined",
+        "RLS policies restrict pick visibility until after locks_at",
+        "RLS policies allow users to only edit their own unpaid brackets"
+      ],
+      "stepsToVerify": [
+        "Run SQL migrations in Supabase dashboard",
+        "Insert test data for each table",
+        "Verify foreign key constraints reject invalid references",
+        "Test RLS policies with different user contexts"
+      ],
+      "priority": 1,
+      "passes": false
+    },
+    {
+      "id": "US-003",
+      "category": "Authentication",
+      "title": "Implement magic link authentication flow",
+      "description": "Users can sign in via email magic link using Supabase Auth",
+      "acceptanceCriteria": [
+        "/login page has email input and submit button",
+        "Submitting email triggers Supabase signInWithOtp()",
+        "Success message displays after email submission",
+        "Magic link redirects to /auth/callback",
+        "/auth/callback exchanges token and creates session",
+        "Authenticated users are redirected to /bracket",
+        "Unauthenticated users accessing protected routes are redirected to /login"
+      ],
+      "stepsToVerify": [
+        "Enter email on /login page",
+        "Check email inbox for magic link",
+        "Click link and verify redirect to /bracket",
+        "Refresh page and confirm session persists",
+        "Log out and verify redirect to /login when accessing /bracket"
+      ],
+      "priority": 1,
+      "passes": false
+    },
+    {
+      "id": "US-004",
+      "category": "Authentication",
+      "title": "Implement profile completion flow",
+      "description": "New users must enter first and last name after first login",
+      "acceptanceCriteria": [
+        "After first magic link login, user is redirected to /profile/setup if name is missing",
+        "/profile/setup page has first_name and last_name inputs (required)",
+        "Submitting updates the users table",
+        "After profile completion, user is redirected to /bracket",
+        "Returning users skip profile setup and go directly to /bracket"
+      ],
+      "stepsToVerify": [
+        "Sign in as new user",
+        "Verify redirect to /profile/setup",
+        "Submit names and verify redirect to /bracket",
+        "Log out and back in, verify direct access to /bracket"
+      ],
+      "priority": 2,
+      "passes": false
+    },
+    {
+      "id": "US-005",
+      "category": "Pool Management",
+      "title": "Implement pool join flow",
+      "description": "Users can join a pool by entering an invite code",
+      "acceptanceCriteria": [
+        "/join page has invite code input",
+        "Valid invite code adds user to pool_members table",
+        "Invalid invite code shows error message",
+        "Users already in pool are redirected to /bracket",
+        "After joining, user is redirected to /bracket"
+      ],
+      "stepsToVerify": [
+        "Navigate to /join as authenticated user",
+        "Enter invalid code, verify error displays",
+        "Enter valid code, verify pool_members row created",
+        "Verify redirect to /bracket",
+        "Revisit /join, verify redirect since already member"
+      ],
+      "priority": 2,
+      "passes": false
+    },
+    {
+      "id": "US-006",
+      "category": "Bracket",
+      "title": "Display bracket list and create new bracket",
+      "description": "Users see their brackets and can create new ones",
+      "acceptanceCriteria": [
+        "/bracket page lists all user's brackets for current pool",
+        "Each bracket shows name, payment status, and created date",
+        "'Create New Bracket' button opens modal or navigates to creation form",
+        "Bracket name is optional with fallback to 'Bracket #N'",
+        "New bracket is saved to brackets table with payment_status='unpaid'",
+        "User can create unlimited brackets"
+      ],
+      "stepsToVerify": [
+        "Navigate to /bracket with no brackets, verify empty state",
+        "Click 'Create New Bracket', enter name",
+        "Verify bracket appears in list",
+        "Create bracket without name, verify auto-generated name"
+      ],
+      "priority": 2,
+      "passes": false
+    },
+    {
+      "id": "US-007",
+      "category": "Bracket",
+      "title": "Build bracket editor UI",
+      "description": "Users can fill out their bracket picks through a visual bracket interface",
+      "acceptanceCriteria": [
+        "/bracket/[id] page displays full NFL playoff bracket structure",
+        "Wild Card round shows 6 games (3 AFC, 3 NFC)",
+        "Divisional round shows 4 slots connected to Wild Card winners + #1 seeds",
+        "Conference Championship shows 2 slots connected to Divisional winners",
+        "Super Bowl shows 1 slot connected to Conference winners",
+        "Clicking a team in a matchup selects them as winner",
+        "Selecting a winner cascades: team advances to next round slot",
+        "Changing a pick in earlier round clears downstream picks involving that team",
+        "Selected teams are visually highlighted"
+      ],
+      "stepsToVerify": [
+        "Load bracket editor with game data",
+        "Click team in Wild Card game, verify advancement to Divisional",
+        "Pick through to Super Bowl, verify all rounds update",
+        "Change Wild Card pick, verify downstream picks reset",
+        "Verify visual feedback for selected vs unselected teams"
+      ],
+      "priority": 2,
+      "passes": false
+    },
+    {
+      "id": "US-008",
+      "category": "Bracket",
+      "title": "Add tiebreaker inputs to bracket",
+      "description": "Users enter Super Bowl total points and total yards predictions",
+      "acceptanceCriteria": [
+        "Bracket editor includes numeric input for 'Super Bowl Total Points'",
+        "Bracket editor includes numeric input for 'Super Bowl Total Yards'",
+        "Inputs are required for bracket submission",
+        "Values are validated as positive integers",
+        "Values are saved to picks table (super_bowl_total_points, super_bowl_total_yards)"
+      ],
+      "stepsToVerify": [
+        "Fill out complete bracket",
+        "Leave tiebreaker fields empty, verify submission blocked",
+        "Enter valid values, verify they save correctly",
+        "Reload page, verify values persist"
+      ],
+      "priority": 3,
+      "passes": false
+    },
+    {
+      "id": "US-009",
+      "category": "Bracket",
+      "title": "Save bracket picks as draft",
+      "description": "Bracket picks auto-save or save on user action while still unpaid",
+      "acceptanceCriteria": [
+        "Picks are saved to picks table associated with bracket_id",
+        "Partial brackets (not all picks made) can be saved",
+        "Unpaid brackets remain editable",
+        "Returning to bracket editor loads existing picks",
+        "Delete bracket button removes unpaid bracket and associated picks"
+      ],
+      "stepsToVerify": [
+        "Make partial picks, navigate away",
+        "Return to bracket, verify picks loaded",
+        "Complete bracket, verify all picks saved",
+        "Delete unpaid bracket, verify removal from database"
+      ],
+      "priority": 3,
+      "passes": false
+    },
+    {
+      "id": "US-010",
+      "category": "Payments",
+      "title": "Integrate PayPal JS SDK",
+      "description": "Set up PayPal JS SDK with PayPal and Venmo payment options",
+      "acceptanceCriteria": [
+        "PayPal JS SDK loads on checkout component",
+        "PayPal Smart Buttons render (PayPal + Venmo options)",
+        "Environment variables for PayPal client ID configured",
+        "Sandbox mode works in development",
+        "Production mode configurable for deployment"
+      ],
+      "stepsToVerify": [
+        "Load checkout component",
+        "Verify PayPal button renders",
+        "Verify Venmo button renders (when eligible)",
+        "Click PayPal button, verify modal opens"
+      ],
+      "priority": 3,
+      "passes": false
+    },
+    {
+      "id": "US-011",
+      "category": "Payments",
+      "title": "Implement bracket checkout flow",
+      "description": "Users pay for all unpaid brackets in a single transaction",
+      "acceptanceCriteria": [
+        "Checkout displays list of unpaid brackets",
+        "Total calculates as (unpaid bracket count x entry_fee)",
+        "PayPal/Venmo button initiates payment for total amount",
+        "On payment success, client receives transaction ID",
+        "Server-side /api/payment/verify endpoint validates transaction with PayPal API",
+        "Valid payment updates all unpaid brackets: payment_status='paid', payment_id set, submitted_at set",
+        "User sees success message and brackets lock"
+      ],
+      "stepsToVerify": [
+        "Create 2 unpaid brackets",
+        "Go to checkout, verify total = 2 x entry_fee",
+        "Complete PayPal sandbox payment",
+        "Verify both brackets now show payment_status='paid'",
+        "Verify brackets are no longer editable"
+      ],
+      "priority": 3,
+      "passes": false
+    },
+    {
+      "id": "US-012",
+      "category": "Payments",
+      "title": "Handle payment edge cases",
+      "description": "Gracefully handle payment failures and edge cases",
+      "acceptanceCriteria": [
+        "User closing PayPal modal returns to checkout with brackets intact",
+        "Payment failure shows error message, brackets remain unpaid",
+        "Server rejects payment if amount doesn't match expected total",
+        "Attempting payment after locks_at shows 'picks locked' error",
+        "Concurrent payment attempts for same brackets handled safely"
+      ],
+      "stepsToVerify": [
+        "Start payment, close modal, verify brackets still unpaid",
+        "Force payment failure in sandbox, verify error message",
+        "Attempt to manipulate amount, verify server rejection",
+        "Set locks_at to past, attempt payment, verify rejection"
+      ],
+      "priority": 4,
+      "passes": false
+    },
+    {
+      "id": "US-013",
+      "category": "Leaderboard",
+      "title": "Build leaderboard with scoring",
+      "description": "Display ranked list of all paid brackets with scores",
+      "acceptanceCriteria": [
+        "/leaderboard page shows all paid brackets in the pool",
+        "Each row shows: rank, display name (First L. - Bracket Name), score",
+        "Score calculates as: Wild Card correct x 1 + Divisional x 2 + Conference x 4 + Super Bowl x 8",
+        "Brackets sorted by score descending",
+        "Ties show same rank",
+        "Only paid brackets appear on leaderboard"
+      ],
+      "stepsToVerify": [
+        "Add game results for some games",
+        "Verify scores calculate correctly",
+        "Verify ranking order is correct",
+        "Add unpaid bracket, verify it doesn't appear"
+      ],
+      "priority": 4,
+      "passes": false
+    },
+    {
+      "id": "US-014",
+      "category": "Leaderboard",
+      "title": "Implement tiebreaker display",
+      "description": "Show tiebreaker differences on leaderboard when scores are tied",
+      "acceptanceCriteria": [
+        "Leaderboard shows columns for TB1 Diff and TB2 Diff",
+        "TB1 Diff = abs(user's predicted total points - actual total points)",
+        "TB2 Diff = abs(user's predicted total yards - actual total yards)",
+        "Tied scores sort by TB1 Diff ascending, then TB2 Diff ascending",
+        "Tiebreaker columns only show values when Super Bowl is complete"
+      ],
+      "stepsToVerify": [
+        "Create two brackets with same score",
+        "Enter Super Bowl actual points and yards",
+        "Verify tiebreaker diffs display correctly",
+        "Verify tied entries sort by tiebreaker"
+      ],
+      "priority": 4,
+      "passes": false
+    },
+    {
+      "id": "US-015",
+      "category": "Leaderboard",
+      "title": "View other users' brackets after lock",
+      "description": "Users can view other players' brackets once picks are locked",
+      "acceptanceCriteria": [
+        "Before locks_at: users can only see their own brackets",
+        "After locks_at: users can view any paid bracket in the pool",
+        "Clicking bracket name on leaderboard opens bracket viewer",
+        "Bracket viewer shows all picks in read-only mode",
+        "Correct/incorrect picks are visually indicated (if results are in)"
+      ],
+      "stepsToVerify": [
+        "Before lock: verify other brackets not accessible",
+        "After lock: click bracket on leaderboard",
+        "Verify bracket displays read-only",
+        "Verify correct picks show green, incorrect show red, pending show neutral"
+      ],
+      "priority": 4,
+      "passes": false
+    },
+    {
+      "id": "US-016",
+      "category": "Admin",
+      "title": "Build admin panel for pool management",
+      "description": "Pool owner can manage pool settings and view members",
+      "acceptanceCriteria": [
+        "/admin page accessible only to pool owner",
+        "Display pool name, invite code, entry fee, locks_at",
+        "Edit locks_at timestamp",
+        "List all pool members",
+        "View payment status summary (paid count, unpaid count, total collected)"
+      ],
+      "stepsToVerify": [
+        "Access /admin as pool owner",
+        "Verify pool details display correctly",
+        "Update locks_at, verify change persists",
+        "Non-owner accessing /admin sees 403 or redirect"
+      ],
+      "priority": 5,
+      "passes": false
+    },
+    {
+      "id": "US-017",
+      "category": "Admin",
+      "title": "Build game results entry interface",
+      "description": "Admin can enter game results manually",
+      "acceptanceCriteria": [
+        "/admin/results shows all games organized by round",
+        "Each game shows: matchup, current winner (if set), starts_at",
+        "Click game to set winner (dropdown or button toggle)",
+        "Super Bowl includes inputs for actual_total_points and actual_total_yards",
+        "Saving result updates games table",
+        "Leaderboard scores recalculate on next load"
+      ],
+      "stepsToVerify": [
+        "View games list in admin",
+        "Set winner for Wild Card game",
+        "Verify winner saved to database",
+        "Set Super Bowl actuals, verify leaderboard tiebreakers update"
+      ],
+      "priority": 5,
+      "passes": false
+    },
+    {
+      "id": "US-018",
+      "category": "Data",
+      "title": "Seed initial game data",
+      "description": "Populate games table with NFL playoff matchups",
+      "acceptanceCriteria": [
+        "All 13 playoff games are seeded with correct matchups",
+        "Games have correct round assignments",
+        "Games have correct home_team and away_team (based on seeding)",
+        "starts_at timestamps are set (can be approximate)",
+        "espn_game_id is populated if using ESPN API, null otherwise"
+      ],
+      "stepsToVerify": [
+        "Run seed script",
+        "Query games table, verify 13 rows",
+        "Verify Wild Card matchups are correct (2v7, 3v6, 4v5 for each conference)",
+        "Verify Divisional round has #1 seeds as home teams"
+      ],
+      "priority": 2,
+      "passes": false
+    },
+    {
+      "id": "US-019",
+      "category": "Data",
+      "title": "Optional: ESPN API integration for results",
+      "description": "Fetch game results from ESPN unofficial API",
+      "acceptanceCriteria": [
+        "API endpoint fetches current playoff game data from ESPN",
+        "Parser extracts winner for completed games",
+        "Admin can trigger 'Sync from ESPN' button",
+        "If API fails, error is logged and admin notified",
+        "Manual entry always overrides API data (source field tracks origin)"
+      ],
+      "stepsToVerify": [
+        "Call ESPN API endpoint",
+        "Parse response for completed game winners",
+        "Trigger sync, verify games table updates",
+        "Simulate API failure, verify graceful error handling"
+      ],
+      "priority": 6,
+      "passes": false
+    },
+    {
+      "id": "US-020",
+      "category": "UI",
+      "title": "Build landing page",
+      "description": "Public landing page explaining the pool and prompting login",
+      "acceptanceCriteria": [
+        "/ route displays pool name and description",
+        "Shows countdown to locks_at timestamp",
+        "Displays entry fee amount",
+        "'Sign In' button navigates to /login",
+        "Authenticated users are redirected to /bracket"
+      ],
+      "stepsToVerify": [
+        "Visit / as unauthenticated user",
+        "Verify pool info and countdown display",
+        "Click sign in, verify navigation to /login",
+        "Visit / as authenticated user, verify redirect to /bracket"
+      ],
+      "priority": 3,
+      "passes": false
+    },
+    {
+      "id": "US-021",
+      "category": "UI",
+      "title": "Implement responsive design",
+      "description": "All pages work on mobile and desktop",
+      "acceptanceCriteria": [
+        "Bracket editor is usable on mobile (scrollable, tappable teams)",
+        "Leaderboard table scrolls horizontally on small screens",
+        "Navigation works on mobile (hamburger menu or similar)",
+        "Payment buttons are touch-friendly",
+        "All text is readable without zooming on mobile"
+      ],
+      "stepsToVerify": [
+        "Test all pages on 375px width viewport",
+        "Verify bracket is navigable via touch",
+        "Verify leaderboard is readable",
+        "Complete full flow on mobile emulator"
+      ],
+      "priority": 5,
+      "passes": false
+    },
+    {
+      "id": "US-022",
+      "category": "Deployment",
+      "title": "Deploy to Vercel with production Supabase",
+      "description": "Application is deployed and accessible publicly",
+      "acceptanceCriteria": [
+        "Vercel project connected to Git repository",
+        "Environment variables configured in Vercel dashboard",
+        "Production Supabase project created with schema",
+        "Auth callback URL configured for production domain",
+        "PayPal client ID switched to production",
+        "Site loads without errors on production URL"
+      ],
+      "stepsToVerify": [
+        "Push to main branch",
+        "Verify Vercel build succeeds",
+        "Visit production URL",
+        "Complete full auth flow on production",
+        "Create and pay for bracket on production"
+      ],
+      "priority": 6,
+      "passes": false
+    }
+  ]
+}
