@@ -9,7 +9,13 @@
     "generate": "nuxt generate",
     "preview": "nuxt preview",
     "postinstall": "nuxt prepare",
-    "typecheck": "nuxt typecheck"
+    "typecheck": "nuxt typecheck",
+    "test": "vitest run",
+    "test:unit": "vitest run --project unit",
+    "test:component": "vitest run --project component",
+    "test:integration": "vitest run --project integration",
+    "test:coverage": "vitest run --coverage",
+    "test:ui": "vitest --ui"
   },
   "keywords": [
     "nuxt",
@@ -25,7 +31,21 @@
     "nuxt": "^4.2.2"
   },
   "devDependencies": {
+    "@nuxt/test-utils": "^3.23.0",
+    "@vitest/browser": "^4.0.17",
+    "@vitest/browser-playwright": "^4.0.17",
+    "@vitest/coverage-v8": "^4.0.17",
+    "@vue/test-utils": "^2.4.6",
+    "happy-dom": "^20.1.0",
+    "msw": "^2.12.7",
+    "playwright": "^1.57.0",
     "tailwindcss": "^4.1.18",
+    "vitest": "^4.0.17",
     "zod": "^4.3.5"
+  },
+  "msw": {
+    "workerDirectory": [
+      "public"
+    ]
   }
 }
