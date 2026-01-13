@@ -1,15 +1,10 @@
 // tests/setup/component.ts
 
 import { beforeAll, afterAll, afterEach } from 'vitest'
-import { worker } from '../mocks/browser'
+import { startMSW, stopMSW, worker } from '../mocks/browser'
 
 beforeAll(async () => {
-  await worker.start({
-    onUnhandledRequest: 'bypass',
-    serviceWorker: {
-      url: '/mockServiceWorker.js',
-    },
-  })
+  await startMSW()
 })
 
 afterEach(() => {
@@ -17,5 +12,5 @@ afterEach(() => {
 })
 
 afterAll(() => {
-  worker.stop()
+  stopMSW()
 })
