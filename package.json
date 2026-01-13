@@ -11,12 +11,21 @@
     "postinstall": "nuxt prepare",
     "typecheck": "nuxt typecheck"
   },
-  "keywords": ["nuxt", "nfl", "bracket", "pool"],
+  "keywords": [
+    "nuxt",
+    "nfl",
+    "bracket",
+    "pool"
+  ],
   "author": "",
   "license": "MIT",
   "dependencies": {
     "@nuxt/ui": "^4.3.0",
     "@nuxtjs/supabase": "^2.0.3",
     "nuxt": "^4.2.2"
+  },
+  "devDependencies": {
+    "tailwindcss": "^4.1.18",
+    "zod": "^4.3.5"
   }
 }

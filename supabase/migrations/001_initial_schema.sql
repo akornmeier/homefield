@@ -1,8 +1,7 @@
 -- Homefield: NFL Playoff Bracket Pool Schema
 -- Run this in your Supabase SQL Editor
 
--- Enable UUID extension
-create extension if not exists "uuid-ossp";
+-- gen_random_uuid() is built into PostgreSQL 13+ (used by Supabase)
 
 -- Users table (extends auth.users)
 create table public.users (
@@ -15,7 +14,7 @@ create table public.users (
 
 -- Pools table
 create table public.pools (
-  id uuid default uuid_generate_v4() primary key,
+  id uuid default gen_random_uuid() primary key,
   name text not null,
   invite_code text unique not null,
   owner_id uuid references public.users(id) on delete set null,
@@ -34,7 +33,7 @@ create table public.pool_members (
 
 -- Brackets
 create table public.brackets (
-  id uuid default uuid_generate_v4() primary key,
+  id uuid default gen_random_uuid() primary key,
   user_id uuid references public.users(id) on delete cascade not null,
   pool_id uuid references public.pools(id) on delete cascade not null,
   name text,
@@ -46,7 +45,7 @@ create table public.brackets (
 
 -- Games
 create table public.games (
-  id uuid default uuid_generate_v4() primary key,
+  id uuid default gen_random_uuid() primary key,
   season_year integer not null,
   round text not null check (round in ('wild_card', 'divisional', 'conference', 'super_bowl')),
   home_team text not null,
@@ -64,7 +63,7 @@ create table public.games (
 
 -- Picks
 create table public.picks (
-  id uuid default uuid_generate_v4() primary key,
+  id uuid default gen_random_uuid() primary key,
   bracket_id uuid references public.brackets(id) on delete cascade not null,
   game_id uuid references public.games(id) on delete cascade not null,
   picked_team text not null,
