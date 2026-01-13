@@ -1,7 +1,7 @@
 import { defineConfig } from 'vitest/config'
+import { defineVitestProject } from '@nuxt/test-utils/config'
 import vue from '@vitejs/plugin-vue'
 import { resolve } from 'path'
-import { playwright } from '@vitest/browser-playwright'
 
 export default defineConfig({
   plugins: [vue()],
@@ -22,19 +22,17 @@ export default defineConfig({
           environment: 'node',
         },
       },
-      {
-        extends: true,
+      defineVitestProject({
         test: {
           name: 'component',
           include: ['tests/component/**/*.test.ts'],
-          browser: {
-            enabled: true,
-            provider: playwright(),
-            instances: [{ browser: 'chromium' }],
+          environmentOptions: {
+            nuxt: {
+              rootDir: '.',
+            },
           },
-          setupFiles: ['tests/setup/component.ts'],
         },
-      },
+      }),
       {
         extends: true,
         test: {
