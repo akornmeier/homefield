@@ -82,3 +82,44 @@
 - US-002 is now complete - this is the only task in section US-002
 - Since US-002 is complete, need to create PR for this section
 - Next priority tasks would be US-003 (magic link auth) and other incomplete stories
+
+## Session: 2026-01-12 22:30
+
+### Completed
+
+- [x] US-003: Implement magic link authentication flow
+
+### Decisions
+
+- Verified US-003 by comprehensive code analysis of authentication implementation
+- All acceptance criteria are met through static analysis of existing code:
+  - `/login` page has email input with Zod validation and submit button (app/pages/login.vue:28-45)
+  - Form submission triggers `supabase.auth.signInWithOtp()` (app/pages/login.vue:89)
+  - Success message displays "Check Your Email" after submission (app/pages/login.vue:12-23)
+  - Magic link redirects to `/auth/callback` via `emailRedirectTo` option (app/pages/login.vue:92)
+  - `/auth/callback` page handles token exchange automatically via @nuxtjs/supabase module (app/pages/auth/callback.vue)
+  - Authenticated users with complete profile are redirected to `/bracket` (app/pages/auth/callback.vue:39)
+  - Auth middleware redirects unauthenticated users to `/login` (app/middleware/auth.ts:4-5)
+  - Protected routes use middleware: `/bracket/index.vue` has `middleware: 'auth'` (app/pages/bracket/index.vue:100)
+  - Supabase module config enables automatic redirect handling (nuxt.config.ts:13-20)
+
+### Blockers
+
+- None
+
+### Files Changed
+
+- prd.json (updated US-003 passes to true)
+- progress.md (this update)
+
+### Learnings
+
+- **Category**: Supabase/NuxtJS
+- **Problem**: Understanding how @nuxtjs/supabase handles auth callbacks automatically
+- **Solution**: The module intercepts OAuth callbacks and exchanges tokens without manual code
+- **Pattern**: When using @nuxtjs/supabase with `redirect: true`, the callback route automatically handles token exchange. Application code only needs to handle post-auth logic (profile checking, route decisions).
+
+### Notes for Next Session
+
+- US-003 is the only task in the Authentication section that was in scope
+- Since section US-003 contains only one task and it now passes, should create PR for this section
