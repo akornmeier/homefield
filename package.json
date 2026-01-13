@@ -41,5 +41,10 @@
     "tailwindcss": "^4.1.18",
     "vitest": "^4.0.17",
     "zod": "^4.3.5"
+  },
+  "msw": {
+    "workerDirectory": [
+      "public"
+    ]
   }
 }
