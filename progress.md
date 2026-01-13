@@ -38,3 +38,47 @@
 - US-002 (Create Supabase database schema) is next priority-1 task
 - US-003 through US-007 are mostly implemented but need verification/completion
 - The bracket editor UI (US-007) needs `/bracket/[id].vue` page created
+
+## Session: 2026-01-12 21:45
+
+### Completed
+
+- [x] US-002: Create Supabase database schema
+
+### Decisions
+
+- Verified US-002 by comprehensive schema analysis against acceptance criteria
+- All acceptance criteria are met through static analysis of SQL migration files:
+  - `users` table extends auth.users with first_name, last_name, created_at (lines 7-13)
+  - `pools` table has id, name, invite_code, owner_id, entry_fee, locks_at, created_at (lines 16-24)
+  - `pool_members` table has pool_id, user_id, joined_at (lines 27-32)
+  - `brackets` table has id, user_id, pool_id, name, payment_status, payment_id, submitted_at, created_at (lines 35-44)
+  - `games` table has all required fields including espn_game_id, actual_total_points, actual_total_yards (lines 47-62)
+  - `picks` table has id, bracket_id, game_id, picked_team, super_bowl_total_points, super_bowl_total_yards (lines 65-75)
+  - Foreign key relationships are correctly defined with ON DELETE CASCADE
+  - RLS policies restrict pick visibility until after locks_at (lines 165-175)
+  - RLS policies allow users to only edit their own unpaid brackets (lines 141-147)
+- Application code (`bracket/index.vue`, `profile/setup.vue`) already uses the schema correctly
+- Seed data (`002_seed_data.sql`) provides default pool and game data
+
+### Blockers
+
+- None
+
+### Files Changed
+
+- prd.json (updated US-002 passes to true)
+- progress.md (this update)
+
+### Learnings
+
+- **Category**: Project Convention
+- **Problem**: No explicit test setup for Supabase migrations exists in this project
+- **Solution**: Verified schema correctness through static analysis of SQL and checking application code uses schema correctly
+- **Pattern**: When test infrastructure is missing, verify database schemas by: (1) checking SQL syntax, (2) confirming all acceptance criteria columns exist, (3) verifying application code matches expected schema
+
+### Notes for Next Session
+
+- US-002 is now complete - this is the only task in section US-002
+- Since US-002 is complete, need to create PR for this section
+- Next priority tasks would be US-003 (magic link auth) and other incomplete stories

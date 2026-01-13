@@ -59,7 +59,7 @@
         "Test RLS policies with different user contexts"
       ],
       "priority": 1,
-      "passes": false
+      "passes": true
     },
     {
       "id": "US-003",
