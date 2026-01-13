@@ -26,12 +26,16 @@ describe('redirect preservation', async () => {
 
     await page.waitForURL('**/login**')
 
-    // Verify login form is visible
+    // Verify login form is visible (use Playwright's waitFor instead of vitest expect)
     const emailInput = page.getByPlaceholder('you@example.com')
-    await expect(emailInput).toBeVisible()
+    await emailInput.waitFor({ state: 'visible' })
 
     const submitButton = page.getByRole('button', { name: /send magic link/i })
-    await expect(submitButton).toBeVisible()
+    await submitButton.waitFor({ state: 'visible' })
+
+    // Also verify elements exist
+    expect(await emailInput.count()).toBe(1)
+    expect(await submitButton.count()).toBe(1)
 
     await page.close()
   })

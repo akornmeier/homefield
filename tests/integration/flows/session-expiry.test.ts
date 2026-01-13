@@ -1,7 +1,7 @@
 // tests/integration/flows/session-expiry.test.ts
 
 import { describe, it, expect } from 'vitest'
-import { setup, createPage } from '@nuxt/test-utils/e2e'
+import { setup, createPage, url } from '@nuxt/test-utils/e2e'
 
 describe('session expiry', async () => {
   await setup({
@@ -21,8 +21,8 @@ describe('session expiry', async () => {
       sessionStorage.clear()
     })
 
-    // Try to navigate to protected route
-    await page.goto('/bracket')
+    // Try to navigate to protected route (use url() for full test server URL)
+    await page.goto(url('/bracket'))
 
     // Should be redirected to login
     await page.waitForURL('**/login**')
@@ -32,7 +32,8 @@ describe('session expiry', async () => {
   })
 
   it('handles graceful redirect without errors', async () => {
-    const page = await createPage()
+    // Use createPage with initial URL, then register error listener
+    const page = await createPage('/')
 
     // Register error listener before navigation to catch all errors
     const errors: string[] = []
@@ -40,7 +41,8 @@ describe('session expiry', async () => {
       errors.push(error.message)
     })
 
-    await page.goto('/bracket')
+    // Navigate to protected route
+    await page.goto(url('/bracket'))
     await page.waitForURL('**/login**')
 
     // No critical errors should occur
