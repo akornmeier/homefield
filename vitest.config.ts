@@ -40,11 +40,7 @@ export default defineConfig({
         test: {
           name: 'integration',
           include: ['tests/integration/**/*.test.ts'],
-          browser: {
-            enabled: true,
-            provider: playwright(),
-            instances: [{ browser: 'chromium' }],
-          },
+          environment: 'node', // @nuxt/test-utils/e2e manages its own browser
           setupFiles: ['tests/setup/integration.ts'],
         },
       },

@@ -32,14 +32,15 @@ describe('session expiry', async () => {
   })
 
   it('handles graceful redirect without errors', async () => {
-    const page = await createPage('/bracket')
+    const page = await createPage()
 
-    // Should redirect without console errors
+    // Register error listener before navigation to catch all errors
     const errors: string[] = []
     page.on('pageerror', (error) => {
       errors.push(error.message)
     })
 
+    await page.goto('/bracket')
     await page.waitForURL('**/login**')
 
     // No critical errors should occur
