@@ -1,6 +1,7 @@
 import { defineConfig } from 'vitest/config'
 import vue from '@vitejs/plugin-vue'
 import { resolve } from 'path'
+import { playwright } from '@vitest/browser-playwright'
 
 export default defineConfig({
   plugins: [vue()],
@@ -28,7 +29,7 @@ export default defineConfig({
           include: ['tests/component/**/*.test.ts'],
           browser: {
             enabled: true,
-            provider: 'playwright',
+            provider: playwright(),
             instances: [{ browser: 'chromium' }],
           },
           setupFiles: ['tests/setup/component.ts'],
@@ -41,7 +42,7 @@ export default defineConfig({
           include: ['tests/integration/**/*.test.ts'],
           browser: {
             enabled: true,
-            provider: 'playwright',
+            provider: playwright(),
             instances: [{ browser: 'chromium' }],
           },
           setupFiles: ['tests/setup/integration.ts'],
