@@ -25,7 +25,14 @@
     "nuxt": "^4.2.2"
   },
   "devDependencies": {
+    "@nuxt/test-utils": "^3.23.0",
+    "@vitest/browser": "^4.0.17",
+    "@vitest/coverage-v8": "^4.0.17",
+    "@vue/test-utils": "^2.4.6",
+    "msw": "^2.12.7",
+    "playwright": "^1.57.0",
     "tailwindcss": "^4.1.18",
+    "vitest": "^4.0.17",
     "zod": "^4.3.5"
   }
 }
